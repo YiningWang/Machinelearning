@@ -1,0 +1,66 @@
+#Coursera Practical Machine Learning Project
+#Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement ¨C a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <http://groupware.les.inf.puc-rio.br/har> (see the section on the Weight Lifting Exercise Dataset).
+
+#Data Process
+```{r error=FALSE, message=FALSE}
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(rattle)
+```
+Import the data and remove NA values for dataset
+```{r}
+training <- read.csv("C:/Users/wangy/Documents/Coursera/MachineLearning/Data/pml-training.csv", na.strings = c("NA", ""))
+testing <- read.csv("C:/Users/wangy/Documents/Coursera/MachineLearning/Data/pml-testing.csv", na.strings = c("NA", ""))
+training <- training[, colSums(is.na(training)) == 0]
+testing <- testing[, colSums(is.na(testing)) == 0]
+trainData <- training[, -c(1:7)]
+testData <- testing[, -c(1:7)]
+```
+```{r}
+dim(trainData)
+dim(testData)
+```
+Remove NA missing values will decrease the variables from 160 to 53 each for Training and Testing dataset. There're total 19622 observations for training data set and 20 observations for test data set.The "classe" variable in the training set is the outcome to predict.
+
+Slice the data
+Split the training set to a 70% for prediction and 30% for validation to computer the out-of-sample errors.
+```{r }
+inTrain <- createDataPartition(trainData$classe, p = 0.7, list = FALSE)
+TrainSet <- trainData[inTrain, ]
+TestSet <- trainData[-inTrain, ]
+```
+#Prediction
+
+##Classification Trees
+```{r}
+set.seed(12345)
+FitRpart <- rpart(classe ~ ., data= TrainSet, method="class")
+prp(FitRpart)#Fast Plot
+```
+Predict outcomes using 30% validation set
+```{r}
+predict_rpart <- predict(FitRpart, TestSet, type = "class")
+```
+Show prediction result
+```{r}
+confusionMatrix(TestSet$classe, predict_rpart)
+```
+Overall acuracy for classification tree is 0.728
+ 
+##Random forests
+```{r}
+set.seed(12345)
+FitRforest <- randomForest(classe ~ ., data=TrainSet)
+```
+predict outcomes using 30% validation set
+```{r}
+predict_rforest <- predict(FitRforest, TestSet, type = "class")
+```
+Show prediction result
+```{r}
+confusionMatrix(TestSet$classe, predict_rforest) 
+```
+Overall acuracy for classification tree is 0.995
